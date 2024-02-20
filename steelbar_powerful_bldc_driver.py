@@ -64,7 +64,7 @@ class PowerfulBLDCDriver:
     def __init__(self, i2c_bus: I2C, address: int = _DEFAULT_I2C_ADDR) -> None:
         self._i2c_device = i2c_device.I2CDevice(i2c_bus, address)
         self._address = address
-        self._send_buffer = bytearray(9)
+        self._send_buffer = bytearray(13)
     
     def _send_register(self, register: int) -> None:
         self._send_buffer[0] = register
@@ -99,20 +99,20 @@ class PowerfulBLDCDriver:
         with self._i2c_device as device:
             device.write(self._send_buffer, 0, 5)
     
-    def _send_two_float_values(self, register: int, data1: float, data2: float) -> None:
+    def _send_three_float_values(self, register: int, data1: float, data2: float, data3: float) -> None:
         self._send_buffer[0] = register
-        struct.pack_into("<ff", self._send_buffer, 1, data1, data2)
+        struct.pack_into("<fff", self._send_buffer, 1, data1, data2, data3)
         with self._i2c_device as device:
-            device.write(self._send_buffer, 0, 9)
+            device.write(self._send_buffer, 0, 13)
     
-    def set_iq_pid_constants(self, kp: float, ki: float) -> None:
-        self._send_two_float_values(0x40, kp, ki)
+    def set_iq_pid_constants(self, kp: float, ki: float, kd: float) -> None:
+        self._send_three_float_values(0x40, kp, ki, kd)
     
-    def set_id_pid_constants(self, kp: float, ki: float) -> None:
-        self._send_two_float_values(0x41, kp, ki)
+    def set_id_pid_constants(self, kp: float, ki: float, kd: float) -> None:
+        self._send_three_float_values(0x41, kp, ki, kd)
     
-    def set_speed_pid_constants(self, kp: float, ki: float) -> None:
-        self._send_two_float_values(0x42, kp, ki)
+    def set_speed_pid_constants(self, kp: float, ki: float, kd: float) -> None:
+        self._send_three_float_values(0x42, kp, ki, kd)
     
     def configure_operating_mode_and_sensor(self, operating_mode: int, sensor_type: int) -> None:
         self._send_8bit_value(0x20, operating_mode + (sensor_type << 4))
