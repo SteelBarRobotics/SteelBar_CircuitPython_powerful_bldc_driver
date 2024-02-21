@@ -68,21 +68,21 @@ class PowerfulBLDCDriver:
     
     def _send_register(self, register: int) -> None:
         self._send_buffer[0] = register
-        with self._i2c_device as device:
-            device.write(self._send_buffer, 0, 1)
+        with self._i2c_device:
+            self._i2c_device.write(self._send_buffer, end=1)
     
     def _send_8bit_value(self, register: int, data: int) -> None:
         self._send_buffer[0] = register
         self._send_buffer[1] = data
-        with self._i2c_device as device:
-            device.write(self._send_buffer, 0, 2)
+        with self._i2c_device:
+            self._i2c_device.write(self._send_buffer, end=2)
     
     def _send_16bit_value(self, register: int, data: int) -> None:
         self._send_buffer[0] = register
         self._send_buffer[1] = data & 0xFF
         self._send_buffer[2] = (data >> 8) & 0xFF
-        with self._i2c_device as device:
-            device.write(self._send_buffer, 0, 3)
+        with self._i2c_device:
+            self._i2c_device.write(self._send_buffer, end=3)
     
     def _send_32bit_value(self, register: int, data: int) -> None:
         self._send_buffer[0] = register
@@ -90,20 +90,20 @@ class PowerfulBLDCDriver:
         self._send_buffer[2] = (data >> 8) & 0xFF
         self._send_buffer[3] = (data >> 16) & 0xFF
         self._send_buffer[4] = (data >> 24) & 0xFF
-        with self._i2c_device as device:
-            device.write(self._send_buffer, 0, 5)
+        with self._i2c_device:
+            self._i2c_device.write(self._send_buffer, end=5)
     
     def _send_float_value(self, register: int, data: float) -> None:
         self._send_buffer[0] = register
         struct.pack_into("<f", self._send_buffer, 1, data)
-        with self._i2c_device as device:
-            device.write(self._send_buffer, 0, 5)
+        with self._i2c_device:
+            self._i2c_device.write(self._send_buffer, end=5)
     
     def _send_three_float_values(self, register: int, data1: float, data2: float, data3: float) -> None:
         self._send_buffer[0] = register
         struct.pack_into("<fff", self._send_buffer, 1, data1, data2, data3)
-        with self._i2c_device as device:
-            device.write(self._send_buffer, 0, 13)
+        with self._i2c_device:
+            self._i2c_device.write(self._send_buffer, end=13)
     
     def set_iq_pid_constants(self, kp: float, ki: float, kd: float) -> None:
         self._send_three_float_values(0x40, kp, ki, kd)
