@@ -89,19 +89,19 @@ class PowerfulBLDCDriver:
   def _pack_int8(self, offset: int, value: int):
     if value < 0:
       value += 256
-    self._receive_buffer[offset] = value & 0xFF
+    self._send_buffer[offset] = value & 0xFF
   def _pack_int16(self, offset: int, value: int):
     if value < 0:
       value += 65536
-    self._receive_buffer[offset] = value & 0xFF
-    self._receive_buffer[offset + 1] = (value >> 8) & 0xFF
+    self._send_buffer[offset] = value & 0xFF
+    self._send_buffer[offset + 1] = (value >> 8) & 0xFF
   def _pack_int32(self, offset: int, value: int):
     if value < 0:
       value += 4294967296
-    self._receive_buffer[offset] = value & 0xFF
-    self._receive_buffer[offset + 1] = (value >> 8) & 0xFF
-    self._receive_buffer[offset + 2] = (value >> 16) & 0xFF
-    self._receive_buffer[offset + 3] = (value >> 24) & 0xFF
+    self._send_buffer[offset] = value & 0xFF
+    self._send_buffer[offset + 1] = (value >> 8) & 0xFF
+    self._send_buffer[offset + 2] = (value >> 16) & 0xFF
+    self._send_buffer[offset + 3] = (value >> 24) & 0xFF
   def _unpack_float(self, offset: int) -> float:
     return struct.unpack_from("<f", self._receive_buffer, offset)[0]
   def _unpack_uint8(self, offset: int) -> int:
