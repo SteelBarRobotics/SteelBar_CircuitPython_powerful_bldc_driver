@@ -228,8 +228,8 @@ class PowerfulBLDCDriver:
     self.ELECANGLEOFFSET = self._unpack_uint32(1)
     self.SINCOSCENTRE = self._unpack_uint32(5)
     if self.calibration_state == 255:
-      return true
-    return false
+      return True
+    return False
   def get_calibration_ELECANGLEOFFSET(self) -> int:
     self._send_buffer[0] = 0x39
     self._i2c_device.write(self._send_buffer, end=1)
@@ -249,7 +249,7 @@ class PowerfulBLDCDriver:
     self.SINCOSCENTRE = self._unpack_uint32(5)
     if self.calibration_state == 255:
       return self.SINCOSCENTRE
-    return false
+    return False
   def update_quick_data_readout(self) -> None:
     if self.QDRformat == 0:
       self._i2c_device.readinto(self._receive_buffer, end=10)
