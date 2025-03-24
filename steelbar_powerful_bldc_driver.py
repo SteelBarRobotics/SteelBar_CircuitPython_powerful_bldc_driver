@@ -91,6 +91,8 @@ class PowerfulBLDCDriver:
            (self._receive_buffer[offset + 3] << 24))
 
   def get_firmware_version(self) -> int:
+    self._send_buffer[0] = 0x00
+    self._i2c_device.write(self._send_buffer, end=1)
     self._i2c_device.readinto(self._receive_buffer, end=4)
     return self._unpack_32bit(0)
   def set_iq_pid_constants(self, kp: float, ki: float, kd: float) -> None:
