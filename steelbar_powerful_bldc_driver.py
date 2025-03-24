@@ -10,7 +10,7 @@
 .. todo:: Describe what the library does.
 
 
-* Author(s): Emily Trau
+* Author(s): Emily Trau, Andrew Chen
 
 Implementation Notes
 --------------------
@@ -61,86 +61,77 @@ COMMAND_MODE_CALIBRATION = const(15)
 
 
 class PowerfulBLDCDriver:
-    def __init__(self, i2c_bus: I2C, address: int = _DEFAULT_I2C_ADDR) -> None:
-        self._i2c_device = i2c_device.I2CDevice(i2c_bus, address)
-        self._address = address
-        self._send_buffer = bytearray(13)
+  def __init__(self, i2c_bus: I2C, address: int = _DEFAULT_I2C_ADDR) -> None:
+    self._i2c_device = i2c_device.I2CDevice(i2c_bus, address)
+    self._address = address
+    self._send_buffer = bytearray(64)
+  def _pack_float(self, offset:int, data: float) -> None:
+    struct.pack_into("<f", self._send_buffer, offset, data);
+  def _pack_8bit(self, offset:int, data: int) -> None:
+    self._send_buffer[offset] = data
+  def _pack_16bit(self, offset:int, data: int) -> None:
+    self._send_buffer[offset] = data & 0xFF
+    self._send_buffer[offset+1] = (data >> 8) & 0xFF
+  def _pack_32bit(self, offset:int, data: int) -> None:
+    self._send_buffer[offset] = data & 0xFF
+    self._send_buffer[offset+1] = (data >> 8) & 0xFF
+    self._send_buffer[offset+2] = (data >> 16) & 0xFF
+    self._send_buffer[offset+3] = (data >> 24) & 0xFF
     
-    def _send_register(self, register: int) -> None:
-        self._send_buffer[0] = register
-        with self._i2c_device:
-            self._i2c_device.write(self._send_buffer, end=1)
-    
-    def _send_8bit_value(self, register: int, data: int) -> None:
-        self._send_buffer[0] = register
-        self._send_buffer[1] = data
-        with self._i2c_device:
-            self._i2c_device.write(self._send_buffer, end=2)
-    
-    def _send_16bit_value(self, register: int, data: int) -> None:
-        self._send_buffer[0] = register
-        self._send_buffer[1] = data & 0xFF
-        self._send_buffer[2] = (data >> 8) & 0xFF
-        with self._i2c_device:
-            self._i2c_device.write(self._send_buffer, end=3)
-    
-    def _send_32bit_value(self, register: int, data: int) -> None:
-        self._send_buffer[0] = register
-        self._send_buffer[1] = data & 0xFF
-        self._send_buffer[2] = (data >> 8) & 0xFF
-        self._send_buffer[3] = (data >> 16) & 0xFF
-        self._send_buffer[4] = (data >> 24) & 0xFF
-        with self._i2c_device:
-            self._i2c_device.write(self._send_buffer, end=5)
-    
-    def _send_float_value(self, register: int, data: float) -> None:
-        self._send_buffer[0] = register
-        struct.pack_into("<f", self._send_buffer, 1, data)
-        with self._i2c_device:
-            self._i2c_device.write(self._send_buffer, end=5)
-    
-    def _send_three_float_values(self, register: int, data1: float, data2: float, data3: float) -> None:
-        self._send_buffer[0] = register
-        struct.pack_into("<fff", self._send_buffer, 1, data1, data2, data3)
-        with self._i2c_device:
-            self._i2c_device.write(self._send_buffer, end=13)
-    
-    def set_iq_pid_constants(self, kp: float, ki: float, kd: float) -> None:
-        self._send_three_float_values(0x40, kp, ki, kd)
-    
-    def set_id_pid_constants(self, kp: float, ki: float, kd: float) -> None:
-        self._send_three_float_values(0x41, kp, ki, kd)
-    
-    def set_speed_pid_constants(self, kp: float, ki: float, kd: float) -> None:
-        self._send_three_float_values(0x42, kp, ki, kd)
-    
-    def configure_operating_mode_and_sensor(self, operating_mode: int, sensor_type: int) -> None:
-        self._send_8bit_value(0x20, operating_mode + (sensor_type << 4))
-    
-    def configure_command_mode(self, command_mode: int) -> None:
-        self._send_8bit_value(0x21, command_mode)
-    
-    def set_voltage(self, voltage: int) -> None:
-        self._send_32bit_value(0x10, voltage)
-    
-    def set_torque(self, torque: int) -> None:
-        self._send_32bit_value(0x11, torque)
-    
-    def set_speed(self, speed: int) -> None:
-        self._send_32bit_value(0x12, speed)
-    
-    def set_current_limit_foc(self, current: int) -> None:
-        self._send_32bit_value(0x33, current)
-    
-    def clear_faults(self) -> None:
-        self._send_register(0x01)
-    
-    def set_ELECANGLEOFFSET(self, value: int) -> None:
-        self._send_32bit_value(0x30, value)
-    
-    def set_EAOPERSPEED(self, value: int) -> None:
-        self._send_32bit_value(0x31, value)
-    
-    def set_SINCOSCENTRE(self, value: int) -> None:
-        self._send_32bit_value(0x32, value)
-    
+  def set_iq_pid_constants(self, kp: float, ki: float, kd: float) -> None:
+    self._send_buffer[0] = 0x40
+    self._pack_float(1, kp)
+    self._pack_float(5, ki)
+    self._pack_float(9, kd)
+    self._i2c_device.write(self._send_buffer, end=13)
+  def set_id_pid_constants(self, kp: float, ki: float, kd: float) -> None:
+    self._send_buffer[0] = 0x41
+    self._pack_float(1, kp)
+    self._pack_float(5, ki)
+    self._pack_float(9, kd)
+    self._i2c_device.write(self._send_buffer, end=13)
+  def set_speed_pid_constants(self, kp: float, ki: float, kd: float) -> None:
+    self._send_buffer[0] = 0x42
+    self._pack_float(1, kp)
+    self._pack_float(5, ki)
+    self._pack_float(9, kd)
+    self._i2c_device.write(self._send_buffer, end=13)
+  def configure_operating_mode_and_sensor(self, operating_mode: int, sensor_type: int) -> None:
+    self._send_buffer[0] = 0x20
+    self._send_buffer[1] = operating_mode + (sensor_type << 4)
+    self._i2c_device.write(self._send_buffer, end=2)
+  def configure_command_mode(self, command_mode: int) -> None:
+    self._send_buffer[0] = 0x21
+    self._send_buffer[1] = command_mode
+    self._i2c_device.write(self._send_buffer, end=2)
+  def set_voltage(self, voltage: int) -> None:
+    self._send_buffer[0] = 0x10
+    self._pack_32bit(voltage)
+    self._i2c_device.write(self._send_buffer, end=5)
+  def set_torque(self, torque: int) -> None:
+    self._send_buffer[0] = 0x11
+    self._pack_32bit(torque)
+    self._i2c_device.write(self._send_buffer, end=5)
+  def set_speed(self, speed: int) -> None:
+    self._send_buffer[0] = 0x12
+    self._pack_32bit(speed)
+    self._i2c_device.write(self._send_buffer, end=5)
+  def set_current_limit_foc(self, current: int) -> None:
+    self._send_buffer[0] = 0x33
+    self._pack_32bit(current)
+    self._i2c_device.write(self._send_buffer, end=5)
+  def clear_faults(self) -> None:
+    self._send_buffer[0] = 0x01
+    self._i2c_device.write(self._send_buffer, end=1)
+  def set_ELECANGLEOFFSET(self, value: int) -> None:
+    self._send_buffer[0] = 0x30
+    self._pack_32bit(value)
+    self._i2c_device.write(self._send_buffer, end=5)
+  def set_EAOPERSPEED(self, value: int) -> None:
+    self._send_buffer[0] = 0x31
+    self._pack_32bit(value)
+    self._i2c_device.write(self._send_buffer, end=5)
+  def set_SINCOSCENTRE(self, value: int) -> None:
+    self._send_buffer[0] = 0x32
+    self._pack_32bit(value)
+    self._i2c_device.write(self._send_buffer, end=5)
