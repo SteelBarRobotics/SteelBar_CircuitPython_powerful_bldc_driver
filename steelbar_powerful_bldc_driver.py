@@ -65,6 +65,7 @@ class PowerfulBLDCDriver:
     self._i2c_device = i2c_device.I2CDevice(i2c_bus, address)
     self._address = address
     self._send_buffer = bytearray(64)
+    self._receive_buffer = bytearray(64)
   def _pack_float(self, offset:int, data: float) -> None:
     struct.pack_into("<f", self._send_buffer, offset, data);
   def _pack_8bit(self, offset:int, data: int) -> None:
@@ -77,7 +78,21 @@ class PowerfulBLDCDriver:
     self._send_buffer[offset+1] = (data >> 8) & 0xFF
     self._send_buffer[offset+2] = (data >> 16) & 0xFF
     self._send_buffer[offset+3] = (data >> 24) & 0xFF
-    
+  def _unpack_float(self, offset: int) -> float:
+    return struct.unpack_from("<f", self._receive_buffer, offset)[0]
+  def _unpack_8bit(self, offset: int) -> int:
+    return self._receive_buffer[offset]
+  def _unpack_16bit(self, offset: int) -> int:
+    return self._receive_buffer[offset] | (self._receive_buffer[offset + 1] << 8)
+  def _unpack_32bit(self, offset: int) -> int:
+    return (self._receive_buffer[offset] |
+           (self._receive_buffer[offset + 1] << 8) |
+           (self._receive_buffer[offset + 2] << 16) |
+           (self._receive_buffer[offset + 3] << 24))
+
+  def get_firmware_version(self) -> int:
+    self._i2c_device.readinto(self._receive_buffer, end=4)
+    return _unpack_32bit(0)
   def set_iq_pid_constants(self, kp: float, ki: float, kd: float) -> None:
     self._send_buffer[0] = 0x40
     self._pack_float(1, kp)
