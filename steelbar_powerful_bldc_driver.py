@@ -210,7 +210,7 @@ class PowerfulBLDCDriver:
     self._pack_uint32(1, voltage)
     self._pack_int32(5, speed)
     self._pack_uint32(9, scycles)
-    self._pack_uint32(13, voltage)
+    self._pack_uint32(13, cycles)
     self._i2c_device.write(self._send_buffer, end=17)
   def start_calibration(self) -> None:
     self._send_buffer[0] = 0x38
