@@ -47,3 +47,5 @@ _build
 .idea
 .vscode
 *~
+
+venv/
